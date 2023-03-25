@@ -1,0 +1,31 @@
+{
+  "name": "@ginlink/grab-tickets",
+  "version": "0.1.0",
+  "private": true,
+  "author": "ginlink",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "packageManager": "yarn@1.22.19",
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "dev:api": "lerna run dev --scope=@ginlink/grab-tickets-api",
+    "dev:web": "lerna run dev --scope=@ginlink/grab-tickets-web",
+    "build:api": "lerna run build --scope=@ginlink/grab-tickets-api",
+    "build:web": "lerna run build --scope=@ginlink/grab-tickets-web",
+    "lint": "yarn lint:api && yarn lint:web",
+    "format": "yarn format:api && yarn format:web",
+    "lint:api": "lerna run lint --scope=@ginlink/grab-tickets-api",
+    "lint:web": "lerna run lint --scope=@ginlink/grab-tickets-web",
+    "format:api": "lerna run format --scope=@ginlink/grab-tickets-api",
+    "format:web": "lerna run format --scope=@ginlink/grab-tickets-web",
+    "postinstall": "yarn bootstrap",
+    "release:patch": "lerna version patch --conventional-commits"
+  },
+  "devDependencies": {
+    "lerna": "^6.5.1",
+    "eslint": "8.33.0",
+    "prettier": "^2.8.3"
+  }
+}
