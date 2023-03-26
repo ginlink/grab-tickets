@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { LoggerEnum } from 'enums/enums';
+import * as path from 'path';
 
 // 配置文件接口
 export interface IConfig {
@@ -31,6 +32,9 @@ export interface IConfig {
 export function isDev(): boolean {
   return process.env.NODE_ENV === 'development';
 }
+
+export const SRC_DIR = path.resolve(__dirname, '..');
+export const ROOT_DIR = path.resolve(__dirname, '../..');
 
 // 根据环境变量判断使用配置
 export default () => {

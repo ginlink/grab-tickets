@@ -9,4 +9,9 @@ export class ToolsController {
   async test() {
     return this.toolsService.test();
   }
+
+  @Get('/init')
+  async init() {
+    return this.toolsService.init();
+  }
 }

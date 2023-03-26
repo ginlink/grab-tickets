@@ -3,6 +3,9 @@ import { Module } from '@nestjs/common';
 import configuration from './config/configuration';
 import { ConfigModule } from '@nestjs/config';
 import { ToolsModule } from './modules/tools/tools.module';
+import { TicketCodeModule } from './modules/ticket-code/ticket-code.module';
+import { TicketModule } from './ticket/ticket.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -16,7 +19,10 @@ import { ToolsModule } from './modules/tools/tools.module';
     SharedModule,
 
     /* 业务模块 */
+    ActivityModule,
     ToolsModule,
+    TicketCodeModule,
+    TicketModule,
   ],
 })
 export class AppModule {}
