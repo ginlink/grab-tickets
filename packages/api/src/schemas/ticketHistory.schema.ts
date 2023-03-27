@@ -4,7 +4,7 @@ import { BaseSchema } from './base.schema';
 import { User } from './user.schema';
 import { TicketCode } from './ticketCode.schema';
 
-export class ticketHistory extends BaseSchema {
+export class TicketHistory extends BaseSchema {
   @Expose()
   @Prop()
   userId: string;
@@ -29,7 +29,7 @@ export class ticketHistory extends BaseSchema {
     foreignField: 'code',
     justOne: true,
   })
-  ticketCode: TicketCode;
+  ticket: TicketCode;
 
   // 券码获得时间
   @Expose()
@@ -37,4 +37,4 @@ export class ticketHistory extends BaseSchema {
   time: number;
 }
 
-ticketHistory.SCHEMA = buildSchema(ticketHistory);
+TicketHistory.SCHEMA = buildSchema(TicketHistory);

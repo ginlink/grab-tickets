@@ -4,4 +4,5 @@ export enum LoggerEnum {
   ticketCode = 'ticketCode',
   ticket = 'ticket',
   activity = 'activity',
+  ticketHistory = 'ticketHistory',
 }

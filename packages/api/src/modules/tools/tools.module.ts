@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ToolsService } from './tools.service';
 import { ToolsController } from './tools.controller';
-import { ActivityModule } from '@/activity/activity.module';
+import { ActivityModule } from '@/modules/activity/activity.module';
 import { TicketCodeModule } from '../ticket-code/ticket-code.module';
 
 @Module({

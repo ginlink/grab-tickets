@@ -6,3 +6,12 @@ export enum RedisKeys {
   ACT_LIST_CACHE_KEY = 'activity_list_page_{page}',
   ACT_DETAIL_CACHE_KEY = 'activity_info_id_{actId}',
 }
+export enum RedisReplaceKeys {
+  ACT_TICKET_CODES = '{actId}',
+  ACT_USER_JOIN_RESULT_1 = '{actId}',
+  ACT_USER_JOIN_RESULT_2 = '{userId}',
+  CODE_TICKET_MAPPING = '{code}',
+  TICKET_DETAIL_CACHE_KEY = '{ticketId}',
+  ACT_LIST_CACHE_KEY = '{page}',
+  ACT_DETAIL_CACHE_KEY = '{actId}',
+}

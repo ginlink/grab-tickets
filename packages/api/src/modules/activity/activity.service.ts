@@ -1,4 +1,5 @@
 import { cache } from '@/lib/cache';
+import { TicketCodeService } from '@/modules/ticket-code/ticket-code.service';
 import { Activity } from '@/schemas/activity.schema';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Injectable, Logger } from '@nestjs/common';
@@ -6,7 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ReturnModelType } from '@typegoose/typegoose';
 import * as dayjs from 'dayjs';
 import { LoggerEnum } from 'enums/enums';
-import { RedisKeys } from 'enums/redisEnums';
+import { RedisKeys, RedisReplaceKeys } from 'enums/redisEnums';
 import Redis from 'ioredis';
 
 const CACHE_TIME_SEC = 120;
@@ -16,9 +17,11 @@ export class ActivityService {
   private readonly logger = new Logger(LoggerEnum.activity);
 
   constructor(
-    @InjectRedis() private readonly redisService: Redis,
+    @InjectRedis() redisService: Redis,
     @InjectModel(Activity.name)
     private readonly activityModel: ReturnModelType<typeof Activity>,
+
+    private readonly ticketCodeService: TicketCodeService,
   ) {
     cache.setClient(redisService);
   }
@@ -101,5 +104,44 @@ export class ActivityService {
     const queryArr = await queryFun;
 
     return queryArr;
+  }
+
+  async checkEnable(aid: string, userId: string) {
+    if (!aid) {
+      throw new Error('Invalid act id');
+    }
+
+    const act = await this.getDetail(aid);
+    if (!act) {
+      throw new Error('Invalid act id');
+    }
+
+    const code = await this.ticketCodeService.getUserJoinCode(aid, userId);
+    if (code) {
+      throw new Error('Repeat participation');
+    }
+
+    return true;
+  }
+
+  async getDetail(aid: string) {
+    let detail = await cache.get(
+      RedisKeys.ACT_DETAIL_CACHE_KEY.replace(
+        RedisReplaceKeys.ACT_DETAIL_CACHE_KEY,
+        aid,
+      ),
+    );
+
+    if (detail) {
+      return detail;
+    }
+
+    detail = await this.activityModel.findOne({ aid });
+
+    if (detail) {
+      this.cacheDetail(detail);
+    }
+
+    return detail;
   }
 }

@@ -1,7 +1,10 @@
+import { ActivityService } from '@/modules/activity/activity.service';
 import { cache } from '@/lib/cache';
+import { TicketCodeService } from '@/modules/ticket-code/ticket-code.service';
 import { Ticket } from '@/schemas/ticket.schema';
+import { TicketHistoryService } from '@/modules/ticket-history/ticket-history.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ReturnModelType } from '@typegoose/typegoose';
 import { LoggerEnum } from 'enums/enums';
@@ -18,6 +21,10 @@ export class TicketService {
     @InjectRedis() private readonly redis: Redis,
     @InjectModel(Ticket.name)
     private readonly ticketModel: ReturnModelType<typeof Ticket>,
+
+    private readonly ticketCodeService: TicketCodeService,
+    private readonly activityService: ActivityService,
+    private readonly ticketHistoryService: TicketHistoryService,
   ) {}
 
   async cacheDetailById(ticketId: string) {
@@ -51,5 +58,39 @@ export class TicketService {
       );
     }
     return ret;
+  }
+
+  async get(aid: string, userId: string) {
+    try {
+      await this.activityService.checkEnable(aid, userId);
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+
+    const code = await this.ticketCodeService.getOneCode(aid, userId);
+
+    // 获取票信息
+    const ticketId = await this.ticketCodeService.getDetailByCode(code);
+    let ticketInfo: Ticket | undefined = undefined;
+    if (ticketId) {
+      this.logger.error('get code ticket mapping error', { code });
+    } else {
+      ticketInfo = await this.ticketModel.findById(ticketId);
+    }
+
+    this.ticketHistoryService.insertHistory(aid, code, userId);
+
+    if (!ticketInfo) {
+      return {
+        data: { code },
+      };
+    }
+
+    return {
+      data: {
+        ...ticketInfo,
+        code,
+      },
+    };
   }
 }

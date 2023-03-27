@@ -12,7 +12,7 @@ import * as dayjs from 'dayjs';
 import { Activity } from '@/schemas/activity.schema';
 import { Ticket } from '@/schemas/ticket.schema';
 import { TicketCodeService } from '../ticket-code/ticket-code.service';
-import { ActivityService } from '@/activity/activity.service';
+import { ActivityService } from '@/modules/activity/activity.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import { SRC_DIR } from '@/config/configuration';
@@ -81,7 +81,7 @@ export class ToolsService {
     }
 
     /// 加载相应的 Model 和 Service
-    let allRet = true;
+    const allRet = true;
     const activityModel = this.activityModel;
     const ticketModel = this.ticketModel;
     const codeService = this.ticketCodeService;
@@ -114,13 +114,13 @@ export class ToolsService {
       const ticketId = await ticketModel.create(ticketInfo);
       ticketId.save();
 
-      // 导入券码列表
-      const ret = await codeService.import(
-        actId.aid,
-        ticketId.id,
-        activityInfo['codeList'],
-      );
-      allRet = allRet && ret;
+      // // 导入券码列表
+      // const ret = await codeService.import(
+      //   actId.aid,
+      //   ticketId.id,
+      //   activityInfo['codeList'],
+      // );
+      // allRet = allRet && ret;
     }
 
     // 设置缓存

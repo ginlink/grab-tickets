@@ -4,8 +4,9 @@ import configuration from './config/configuration';
 import { ConfigModule } from '@nestjs/config';
 import { ToolsModule } from './modules/tools/tools.module';
 import { TicketCodeModule } from './modules/ticket-code/ticket-code.module';
-import { TicketModule } from './ticket/ticket.module';
-import { ActivityModule } from './activity/activity.module';
+import { TicketModule } from './modules/ticket/ticket.module';
+import { ActivityModule } from './modules/activity/activity.module';
+import { TicketHistoryModule } from './modules/ticket-history/ticket-history.module';
 
 @Module({
   imports: [
@@ -19,9 +20,10 @@ import { ActivityModule } from './activity/activity.module';
     SharedModule,
 
     /* 业务模块 */
-    ActivityModule,
-    ToolsModule,
+    // ToolsModule,
     TicketCodeModule,
+    ActivityModule,
+    TicketHistoryModule,
     TicketModule,
   ],
 })
