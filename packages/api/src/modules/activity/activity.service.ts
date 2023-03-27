@@ -88,12 +88,13 @@ export class ActivityService {
     );
   }
 
-  async getList(queryOption = {}, sort, limit = 0, offset = 0) {
+  async getList(queryOption = {}, sort: any, limit = 0, offset = 0) {
     const collection = this.activityModel;
     let queryFun = collection.find(queryOption);
 
     if (sort) {
-      queryFun = queryFun.sort();
+      sort = typeof sort === 'string' ? JSON.parse(sort) : sort;
+      queryFun = queryFun.sort(sort);
     }
     if (limit > 0) {
       queryFun = queryFun.limit(limit);
@@ -143,5 +144,17 @@ export class ActivityService {
     }
 
     return detail;
+  }
+
+  async list(filter: any) {
+    // eslint-disable-next-line prefer-const
+    let { page, pageSize, sort, ...rest } = filter;
+
+    page = page ? page - 1 : 0;
+    pageSize = pageSize || 20;
+
+    const list = await this.getList(rest, sort, pageSize, page * pageSize);
+    const total = await this.activityModel.countDocuments(rest);
+    return { data: { list, total } };
   }
 }
