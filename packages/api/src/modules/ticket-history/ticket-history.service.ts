@@ -3,7 +3,7 @@ import { TicketHistory } from '@/schemas';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ReturnModelType } from '@typegoose/typegoose';
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 import { LoggerEnum } from 'enums/enums';
 
 @Injectable()
@@ -44,5 +44,38 @@ export class TicketHistoryService {
     }
 
     return rowInfo;
+  }
+
+  async getList(queryOption = {}, sort: any, limit = 0, offset = 0) {
+    const collection = this.ticketHistoryModel;
+    let queryFun = collection.find(queryOption);
+
+    if (sort) {
+      sort = typeof sort === 'string' ? JSON.parse(sort) : sort;
+      queryFun = queryFun.sort(sort);
+    }
+    if (limit > 0) {
+      queryFun = queryFun.limit(limit);
+    }
+    if (offset > 0) {
+      queryFun = queryFun.skip(offset);
+    }
+    const queryArr = await queryFun;
+
+    return queryArr;
+  }
+
+  async list(filter: any) {
+    const collection = this.ticketHistoryModel;
+
+    // eslint-disable-next-line prefer-const
+    let { page, pageSize, sort, ...rest } = filter;
+
+    page = page ? page - 1 : 0;
+    pageSize = pageSize || 20;
+
+    const list = await this.getList(rest, sort, pageSize, page * pageSize);
+    const total = await collection.countDocuments(rest);
+    return { list, total };
   }
 }

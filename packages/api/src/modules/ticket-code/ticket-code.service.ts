@@ -39,7 +39,7 @@ export class TicketCodeService {
     cache.setClient(redis);
   }
 
-  async import(actId: string, ticketId: string, ticketCodes: any[]) {
+  async import(activityId: string, ticketId: string, ticketCodes: any[]) {
     const codeModel = this.ticketCodeModel;
     const ticketModel = this.ticketModel;
     const actModel = this.activityModel;
@@ -48,19 +48,27 @@ export class TicketCodeService {
 
     if (
       !actModel.findOne({
-        aid: actId,
+        aid: activityId,
       })
     ) {
-      this.logger.error('wrong act id', { actId, ticketId, ticketCodes });
+      this.logger.error('wrong activity id', {
+        activityId,
+        ticketId,
+        ticketCodes,
+      });
       return false;
     }
     if (!ticketModel.findById(ticketId)) {
-      this.logger.error('wrong ticket id', { actId, ticketId, ticketCodes });
+      this.logger.error('wrong ticket id', {
+        activityId,
+        ticketId,
+        ticketCodes,
+      });
       return false;
     }
     if (!ticketCodes || ticketCodes.length < 1) {
       this.logger.error('ticket codes is not right', {
-        actId,
+        activityId,
         ticketId,
         ticketCodes,
       });
@@ -83,16 +91,16 @@ export class TicketCodeService {
       });
     }
     if (!filterList || filterList.length < 1) {
-      this.logger.error('has alreay import', {
-        actId,
+      this.logger.error('has already import', {
+        activityId,
         ticketCodes,
         filterList,
       });
       return false;
     }
-    const successList = await this.lpushCodes(actId, filterList);
+    const successList = await this.lpushCodes(activityId, filterList);
     if (!successList || successList.length < 1) {
-      this.logger.error('lpush redis error', { actId, filterList });
+      this.logger.error('lpush redis error', { activityId, filterList });
       return false;
     }
     rowList = rowList.filter((rowInfo) => {
@@ -152,9 +160,9 @@ export class TicketCodeService {
     return rowInfo;
   }
 
-  async lpushCodes(actId, codes) {
+  async lpushCodes(activityId, codes) {
     const redisClient = this.redis;
-    const key = RedisKeys.ACT_TICKET_CODES.replace('{actId}', actId);
+    const key = RedisKeys.ACT_TICKET_CODES.replace('{activityId}', activityId);
 
     const successList = [];
     for (const ticketCode of codes) {
@@ -168,9 +176,9 @@ export class TicketCodeService {
     return successList;
   }
 
-  async lpopCode(actId) {
+  async lpopCode(activityId) {
     const redisClient = this.redis;
-    const key = RedisKeys.ACT_TICKET_CODES.replace('{actId}', actId);
+    const key = RedisKeys.ACT_TICKET_CODES.replace('{activityId}', activityId);
     const ret = await redisClient.lpop(key);
     return ret;
   }

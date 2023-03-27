@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ToolsService } from './tools.service';
+import { DataObj } from '@/common/class/data-obj.class';
 
 @Controller('tools')
 export class ToolsController {
@@ -7,11 +8,13 @@ export class ToolsController {
 
   @Get('/test')
   async test() {
-    return this.toolsService.test();
+    const data = await this.toolsService.test();
+    return DataObj.create(data);
   }
 
   @Get('/init')
   async init() {
-    return this.toolsService.init();
+    const data = await this.toolsService.init();
+    return DataObj.create(data);
   }
 }

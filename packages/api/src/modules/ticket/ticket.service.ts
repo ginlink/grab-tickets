@@ -16,6 +16,7 @@ import { ReturnModelType } from '@typegoose/typegoose';
 import { LoggerEnum } from 'enums/enums';
 import { RedisKeys } from 'enums/redisEnums';
 import Redis from 'ioredis';
+import { DataObj } from '@/common/class/data-obj.class';
 
 const CACHE_TIME_SEC = 0;
 
@@ -61,7 +62,7 @@ export class TicketService {
     );
     if (!ret) {
       this.logger.error(
-        `cache act info ${ticketInfo['_id']} list error`,
+        `cache activity info ${ticketInfo['_id']} list error`,
         ticketInfo,
       );
     }
@@ -80,25 +81,55 @@ export class TicketService {
     // 获取票信息
     const ticketId = await this.ticketCodeService.getDetailByCode(code);
     let ticketInfo: Ticket | undefined = undefined;
-    if (ticketId) {
+    if (!ticketId) {
       this.logger.error('get code ticket mapping error', { code });
     } else {
-      ticketInfo = await this.ticketModel.findById(ticketId);
+      ticketInfo = await this.ticketModel.findById(ticketId).lean();
     }
 
     this.ticketHistoryService.insertHistory(aid, code, userId);
 
     if (!ticketInfo) {
-      return {
-        data: { code },
-      };
+      return { code };
     }
 
-    return {
-      data: {
-        ...ticketInfo,
-        code,
-      },
-    };
+    return { ...ticketInfo, code };
+  }
+
+  getDetailById(id) {
+    return this.ticketModel.findById(id).populate(['activity']);
+  }
+
+  async getList(queryOption = {}, sort: any, limit = 0, offset = 0) {
+    const collection = this.ticketModel;
+    let queryFun = collection.find(queryOption);
+
+    if (sort) {
+      sort = typeof sort === 'string' ? JSON.parse(sort) : sort;
+      queryFun = queryFun.sort(sort);
+    }
+    if (limit > 0) {
+      queryFun = queryFun.limit(limit);
+    }
+    if (offset > 0) {
+      queryFun = queryFun.skip(offset);
+    }
+    const queryArr = await queryFun;
+
+    return queryArr;
+  }
+
+  async list(filter: any) {
+    const collection = this.ticketModel;
+
+    // eslint-disable-next-line prefer-const
+    let { page, pageSize, sort, ...rest } = filter;
+
+    page = page ? page - 1 : 0;
+    pageSize = pageSize || 20;
+
+    const list = await this.getList(rest, sort, pageSize, page * pageSize);
+    const total = await collection.countDocuments(rest);
+    return { list, total };
   }
 }

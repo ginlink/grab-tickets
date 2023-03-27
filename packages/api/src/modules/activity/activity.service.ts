@@ -47,7 +47,7 @@ export class ActivityService {
         CACHE_TIME_SEC,
       );
       if (!ret) {
-        this.logger.error(`cache act page ${i} list error`);
+        this.logger.error(`cache activity page ${i} list error`);
       }
       allResult = allResult && ret;
     }
@@ -59,13 +59,16 @@ export class ActivityService {
       return;
     }
     const ret = await cache.set(
-      RedisKeys.ACT_DETAIL_CACHE_KEY.replace('{actId}', actInfo['_id']),
+      RedisKeys.ACT_DETAIL_CACHE_KEY.replace('{activityId}', actInfo['_id']),
       actInfo,
       CACHE_TIME_SEC,
       true,
     );
     if (!ret) {
-      this.logger.error(`cache act info ${actInfo['_id']} list error`, actInfo);
+      this.logger.error(
+        `cache activity info ${actInfo['_id']} list error`,
+        actInfo,
+      );
     }
   }
 
@@ -109,12 +112,16 @@ export class ActivityService {
 
   async checkEnable(aid: string, userId: string) {
     if (!aid) {
-      throw new Error('Invalid act id');
+      throw new Error('Invalid activity id');
     }
 
-    const act = await this.getDetail(aid);
-    if (!act) {
-      throw new Error('Invalid act id');
+    if (!userId) {
+      throw new Error('Invalid user id');
+    }
+
+    const activity = await this.getDetail(aid);
+    if (!activity) {
+      throw new Error('Invalid activity id');
     }
 
     const code = await this.ticketCodeService.getUserJoinCode(aid, userId);
@@ -155,6 +162,6 @@ export class ActivityService {
 
     const list = await this.getList(rest, sort, pageSize, page * pageSize);
     const total = await this.activityModel.countDocuments(rest);
-    return { data: { list, total } };
+    return { list, total };
   }
 }

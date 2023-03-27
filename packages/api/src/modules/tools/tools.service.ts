@@ -25,7 +25,7 @@ export class ToolsService {
 
   constructor(
     @Inject(forwardRef(() => ActivityService))
-    private readonly actService: ActivityService,
+    private readonly activityService: ActivityService,
     @Inject(forwardRef(() => TicketCodeService))
     private readonly ticketCodeService: TicketCodeService,
 
@@ -58,9 +58,7 @@ export class ToolsService {
       this.logger.error('connect mongodb error', error);
       throw new InternalServerErrorException(`connect mongodb error`);
     }
-    return {
-      data: 'mongodb and redis connect success',
-    };
+    return 'mongodb and redis connect success';
   }
 
   /**
@@ -86,7 +84,7 @@ export class ToolsService {
     }
 
     /// 加载相应的 Model 和 Service
-    const allRet = true;
+    let allRet = true;
     const activityModel = this.activityModel;
     const ticketModel = this.ticketModel;
     const codeService = this.ticketCodeService;
@@ -108,31 +106,29 @@ export class ToolsService {
       delete actInfo['days'];
 
       // 插入活动信息
-      const actId = await activityModel.create(actInfo);
-      actId.save();
+      const activity = await activityModel.create(actInfo);
 
       // 插入票信息
       const ticketInfo = activityInfo['ticketInfo'];
-      ticketInfo['actId'] = actId;
+      ticketInfo['activityId'] = activity.id;
       ticketInfo['startTime'] = dayjs().unix();
       ticketInfo['endTime'] = dayjs().unix() + ticketInfo.days * 86400;
-      const ticketId = await ticketModel.create(ticketInfo);
-      ticketId.save();
+      const ticket = await ticketModel.create(ticketInfo);
 
-      // // 导入券码列表
-      // const ret = await codeService.import(
-      //   actId.aid,
-      //   ticketId.id,
-      //   activityInfo['codeList'],
-      // );
-      // allRet = allRet && ret;
+      // 导入券码列表
+      const ret = await codeService.import(
+        activity.aid,
+        ticket.id,
+        activityInfo['codeList'],
+      );
+      allRet = allRet && ret;
     }
 
     // 设置缓存
-    await this.actService.cacheList();
+    await this.activityService.cacheList();
 
     if (allRet) {
-      return { data: 'init success' };
+      return 'init success';
     }
 
     throw new InternalServerErrorException(
