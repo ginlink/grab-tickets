@@ -1,6 +1,6 @@
 import { TicketCodeService } from '@/modules/ticket-code/ticket-code.service';
 import { TicketHistory } from '@/schemas';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ReturnModelType } from '@typegoose/typegoose';
 import dayjs from 'dayjs';
@@ -14,6 +14,7 @@ export class TicketHistoryService {
     @InjectModel(TicketHistory.name)
     private readonly ticketHistoryModel: ReturnModelType<typeof TicketHistory>,
 
+    @Inject(forwardRef(() => TicketCodeService))
     private readonly ticketCodeService: TicketCodeService,
   ) {}
 

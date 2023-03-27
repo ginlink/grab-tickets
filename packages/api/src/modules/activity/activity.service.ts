@@ -2,7 +2,7 @@ import { cache } from '@/lib/cache';
 import { TicketCodeService } from '@/modules/ticket-code/ticket-code.service';
 import { Activity } from '@/schemas/activity.schema';
 import { InjectRedis } from '@nestjs-modules/ioredis';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ReturnModelType } from '@typegoose/typegoose';
 import * as dayjs from 'dayjs';
@@ -17,11 +17,11 @@ export class ActivityService {
   private readonly logger = new Logger(LoggerEnum.activity);
 
   constructor(
+    @Inject(forwardRef(() => TicketCodeService))
+    private readonly ticketCodeService: TicketCodeService,
     @InjectRedis() redisService: Redis,
     @InjectModel(Activity.name)
     private readonly activityModel: ReturnModelType<typeof Activity>,
-
-    private readonly ticketCodeService: TicketCodeService,
   ) {
     cache.setClient(redisService);
   }

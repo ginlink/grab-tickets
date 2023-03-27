@@ -20,11 +20,11 @@ import { TicketHistoryModule } from './modules/ticket-history/ticket-history.mod
     SharedModule,
 
     /* 业务模块 */
-    // ToolsModule,
+    TicketModule,
     TicketCodeModule,
     ActivityModule,
     TicketHistoryModule,
-    TicketModule,
+    ToolsModule,
   ],
 })
 export class AppModule {}

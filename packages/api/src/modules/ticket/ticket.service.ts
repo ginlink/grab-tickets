@@ -4,7 +4,13 @@ import { TicketCodeService } from '@/modules/ticket-code/ticket-code.service';
 import { Ticket } from '@/schemas/ticket.schema';
 import { TicketHistoryService } from '@/modules/ticket-history/ticket-history.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ReturnModelType } from '@typegoose/typegoose';
 import { LoggerEnum } from 'enums/enums';
@@ -22,7 +28,9 @@ export class TicketService {
     @InjectModel(Ticket.name)
     private readonly ticketModel: ReturnModelType<typeof Ticket>,
 
+    @Inject(forwardRef(() => TicketCodeService))
     private readonly ticketCodeService: TicketCodeService,
+    @Inject(forwardRef(() => ActivityService))
     private readonly activityService: ActivityService,
     private readonly ticketHistoryService: TicketHistoryService,
   ) {}

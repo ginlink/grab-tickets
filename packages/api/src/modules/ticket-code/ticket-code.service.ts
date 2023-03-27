@@ -4,9 +4,11 @@ import { TicketCode } from '@/schemas/ticketCode.schema';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ReturnModelType } from '@typegoose/typegoose';
@@ -23,108 +25,114 @@ export class TicketCodeService {
 
   // TODO 这里引入 ticketService 会导致循环依赖
   constructor(
-    @InjectRedis() private readonly redis: Redis,
+    @Inject(forwardRef(() => TicketService))
+    private readonly ticketService: TicketService,
 
+    @InjectRedis() private readonly redis: Redis,
     @InjectModel(TicketCode.name)
-    private readonly ticketCodeModel: ReturnModelType<typeof TicketCode>, // @InjectModel(Ticket.name) // private readonly ticketModel: ReturnModelType<typeof Ticket>, // @InjectModel(Activity.name) // private readonly activityModel: ReturnModelType<typeof Activity>, // private readonly ticketService: TicketService,
+    private readonly ticketCodeModel: ReturnModelType<typeof TicketCode>,
+    @InjectModel(Ticket.name)
+    private readonly ticketModel: ReturnModelType<typeof Ticket>,
+    @InjectModel(Activity.name)
+    private readonly activityModel: ReturnModelType<typeof Activity>,
   ) {
     cache.setClient(redis);
   }
 
-  // async import(actId: string, ticketId: string, ticketCodes: any[]) {
-  //   const codeModel = this.ticketCodeModel;
-  //   const ticketModel = this.ticketModel;
-  //   const actModel = this.activityModel;
+  async import(actId: string, ticketId: string, ticketCodes: any[]) {
+    const codeModel = this.ticketCodeModel;
+    const ticketModel = this.ticketModel;
+    const actModel = this.activityModel;
 
-  //   cache.setClient(this.redis);
+    cache.setClient(this.redis);
 
-  //   if (
-  //     !actModel.findOne({
-  //       aid: actId,
-  //     })
-  //   ) {
-  //     this.logger.error('wrong act id', { actId, ticketId, ticketCodes });
-  //     return false;
-  //   }
-  //   if (!ticketModel.findById(ticketId)) {
-  //     this.logger.error('wrong ticket id', { actId, ticketId, ticketCodes });
-  //     return false;
-  //   }
-  //   if (!ticketCodes || ticketCodes.length < 1) {
-  //     this.logger.error('ticket codes is not right', {
-  //       actId,
-  //       ticketId,
-  //       ticketCodes,
-  //     });
-  //     return false;
-  //   }
-  //   const filterList = [];
-  //   let rowList = [];
-  //   for (const ticketCode of ticketCodes) {
-  //     if (!ticketCode || ticketCode.length < 5) {
-  //       continue;
-  //     }
-  //     const codeInfo = await this.getInfoByCodeAndTicket(ticketCode, ticketId);
-  //     if (codeInfo) {
-  //       continue;
-  //     }
-  //     filterList.push(ticketCode);
-  //     rowList.push({
-  //       ticketId: ticketId,
-  //       code: ticketCode,
-  //     });
-  //   }
-  //   if (!filterList || filterList.length < 1) {
-  //     this.logger.error('has alreay import', {
-  //       actId,
-  //       ticketCodes,
-  //       filterList,
-  //     });
-  //     return false;
-  //   }
-  //   const successList = await this.lpushCodes(actId, filterList);
-  //   if (!successList || successList.length < 1) {
-  //     this.logger.error('lpush redis error', { actId, filterList });
-  //     return false;
-  //   }
-  //   rowList = rowList.filter((rowInfo) => {
-  //     return successList.includes(rowInfo['code']);
-  //   });
+    if (
+      !actModel.findOne({
+        aid: actId,
+      })
+    ) {
+      this.logger.error('wrong act id', { actId, ticketId, ticketCodes });
+      return false;
+    }
+    if (!ticketModel.findById(ticketId)) {
+      this.logger.error('wrong ticket id', { actId, ticketId, ticketCodes });
+      return false;
+    }
+    if (!ticketCodes || ticketCodes.length < 1) {
+      this.logger.error('ticket codes is not right', {
+        actId,
+        ticketId,
+        ticketCodes,
+      });
+      return false;
+    }
+    const filterList = [];
+    let rowList = [];
+    for (const ticketCode of ticketCodes) {
+      if (!ticketCode || ticketCode.length < 5) {
+        continue;
+      }
+      const codeInfo = await this.getInfoByCodeAndTicket(ticketCode, ticketId);
+      if (codeInfo) {
+        continue;
+      }
+      filterList.push(ticketCode);
+      rowList.push({
+        ticketId: ticketId,
+        code: ticketCode,
+      });
+    }
+    if (!filterList || filterList.length < 1) {
+      this.logger.error('has alreay import', {
+        actId,
+        ticketCodes,
+        filterList,
+      });
+      return false;
+    }
+    const successList = await this.lpushCodes(actId, filterList);
+    if (!successList || successList.length < 1) {
+      this.logger.error('lpush redis error', { actId, filterList });
+      return false;
+    }
+    rowList = rowList.filter((rowInfo) => {
+      return successList.includes(rowInfo['code']);
+    });
 
-  //   if (rowList.length < 1) {
-  //     return true;
-  //   }
+    if (rowList.length < 1) {
+      return true;
+    }
 
-  //   const mongoRet = await codeModel.insertMany(rowList);
-  //   if (!mongoRet) {
-  //     this.logger.error('insert mongodb error, pls retry later', {
-  //       mongoRet,
-  //       rowList,
-  //     });
-  //   }
+    const mongoRet = await codeModel.insertMany(rowList);
+    if (!mongoRet) {
+      this.logger.error('insert mongodb error, pls retry later', {
+        mongoRet,
+        rowList,
+      });
+    }
 
-  //   const ticketService = this.ticketService;
-  //   rowList.forEach(async (rowInfo) => {
-  //     const setRet = await cache.set(
-  //       RedisKeys.CODE_TICKET_MAPPING.replace('{code}', rowInfo['code']),
-  //       rowInfo['ticketId'],
-  //       CACHE_TIME_SEC,
-  //     );
-  //     if (!setRet) {
-  //       this.logger.error('set cache error', {
-  //         CODE_TICKET_MAPPING: RedisKeys.CODE_TICKET_MAPPING,
-  //         rowInfo,
-  //       });
-  //     }
-  //     const ticketCacheRet = await ticketService.cacheDetailById(
-  //       rowInfo['ticketId'],
-  //     );
-  //     if (!ticketCacheRet) {
-  //       this.logger.error('set cache ticketInfo error', { rowInfo });
-  //     }
-  //   });
-  //   return true;
-  // }
+    const ticketService = this.ticketService;
+    rowList.forEach(async (rowInfo) => {
+      const setRet = await cache.set(
+        RedisKeys.CODE_TICKET_MAPPING.replace('{code}', rowInfo['code']),
+        rowInfo['ticketId'],
+        CACHE_TIME_SEC,
+      );
+      if (!setRet) {
+        this.logger.error('set cache error', {
+          CODE_TICKET_MAPPING: RedisKeys.CODE_TICKET_MAPPING,
+          rowInfo,
+        });
+      }
+      const ticketCacheRet = await ticketService.cacheDetailById(
+        rowInfo['ticketId'],
+      );
+      if (!ticketCacheRet) {
+        this.logger.error('set cache ticketInfo error', { rowInfo });
+      }
+    });
+    return true;
+  }
 
   async getInfoByCodeAndTicket(ticketCode: string, ticketId: string) {
     if (!ticketCode) {

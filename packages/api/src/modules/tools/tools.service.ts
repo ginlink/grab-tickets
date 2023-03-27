@@ -2,6 +2,8 @@ import {
   InternalServerErrorException,
   Injectable,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 import { InjectModel } from '@nestjs/mongoose';
@@ -22,6 +24,11 @@ export class ToolsService {
   private readonly logger = new Logger(LoggerEnum.tools);
 
   constructor(
+    @Inject(forwardRef(() => ActivityService))
+    private readonly actService: ActivityService,
+    @Inject(forwardRef(() => TicketCodeService))
+    private readonly ticketCodeService: TicketCodeService,
+
     @InjectRedis() private readonly redisService: Redis,
     @InjectModel(User.name)
     private readonly userModel: ReturnModelType<typeof User>,
@@ -29,8 +36,6 @@ export class ToolsService {
     private readonly activityModel: ReturnModelType<typeof Activity>,
     @InjectModel(Ticket.name)
     private readonly ticketModel: ReturnModelType<typeof Ticket>,
-    private readonly ticketCodeService: TicketCodeService,
-    private readonly actService: ActivityService,
   ) {}
 
   async test() {

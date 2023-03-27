@@ -7,12 +7,8 @@ import { TicketHistoryModule } from '@/modules/ticket-history/ticket-history.mod
 
 @Module({
   imports: [
-    // forwardRef(() => TicketHistoryModule),
-    // forwardRef(() => ActivityModule),
-    // forwardRef(() => TicketCodeModule),
-
-    TicketCodeModule,
-    ActivityModule,
+    forwardRef(() => TicketCodeModule),
+    forwardRef(() => ActivityModule),
     TicketHistoryModule,
   ],
   controllers: [TicketController],

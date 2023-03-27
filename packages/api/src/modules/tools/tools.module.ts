@@ -1,11 +1,14 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ToolsService } from './tools.service';
 import { ToolsController } from './tools.controller';
 import { ActivityModule } from '@/modules/activity/activity.module';
 import { TicketCodeModule } from '../ticket-code/ticket-code.module';
 
 @Module({
-  imports: [ActivityModule, TicketCodeModule],
+  imports: [
+    forwardRef(() => ActivityModule),
+    forwardRef(() => TicketCodeModule),
+  ],
   controllers: [ToolsController],
   providers: [ToolsService],
 })
